@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6"/>
+	<Project>
+		<Option title="web_crawler"/>
+		<Option makefile_is_custom="1"/>
+		<Option compiler="gcc"/>
+		<Option virtualFolders="CMake Files\;"/>
+		<Build>
+			<Target title="all">
+				<Option working_dir="/Users/yuliang/Desktop/IT/COMP9024/assignment/web_crawler/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/Users/yuliang/Desktop/IT/COMP9024/assignment/web_crawler/cmake-build-debug/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/Users/yuliang/Desktop/IT/COMP9024/assignment/web_crawler/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/Users/yuliang/Desktop/IT/COMP9024/assignment/web_crawler/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/Users/yuliang/Desktop/IT/COMP9024/assignment/web_crawler/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="rebuild_cache">
+				<Option working_dir="/Users/yuliang/Desktop/IT/COMP9024/assignment/web_crawler/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/Users/yuliang/Desktop/IT/COMP9024/assignment/web_crawler/cmake-build-debug/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/Users/yuliang/Desktop/IT/COMP9024/assignment/web_crawler/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/Users/yuliang/Desktop/IT/COMP9024/assignment/web_crawler/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/Users/yuliang/Desktop/IT/COMP9024/assignment/web_crawler/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="edit_cache">
+				<Option working_dir="/Users/yuliang/Desktop/IT/COMP9024/assignment/web_crawler/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/Users/yuliang/Desktop/IT/COMP9024/assignment/web_crawler/cmake-build-debug/Makefile&quot;  VERBOSE=1 edit_cache"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/Users/yuliang/Desktop/IT/COMP9024/assignment/web_crawler/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/Users/yuliang/Desktop/IT/COMP9024/assignment/web_crawler/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/Users/yuliang/Desktop/IT/COMP9024/assignment/web_crawler/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="web_crawler">
+				<Option output="/Users/yuliang/Desktop/IT/COMP9024/assignment/web_crawler/cmake-build-debug/web_crawler" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/Users/yuliang/Desktop/IT/COMP9024/assignment/web_crawler/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/Library/Developer/CommandLineTools/usr/lib/clang/12.0.5/include"/>
+					<Add directory="/Library/Developer/CommandLineTools/usr/include"/>
+					<Add directory="/System/Library/Frameworks"/>
+					<Add directory="/Library/Frameworks"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/Users/yuliang/Desktop/IT/COMP9024/assignment/web_crawler/cmake-build-debug/Makefile&quot;  VERBOSE=1 web_crawler"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/Users/yuliang/Desktop/IT/COMP9024/assignment/web_crawler/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/Users/yuliang/Desktop/IT/COMP9024/assignment/web_crawler/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/Users/yuliang/Desktop/IT/COMP9024/assignment/web_crawler/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="web_crawler/fast">
+				<Option output="/Users/yuliang/Desktop/IT/COMP9024/assignment/web_crawler/cmake-build-debug/web_crawler" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/Users/yuliang/Desktop/IT/COMP9024/assignment/web_crawler/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/Library/Developer/CommandLineTools/usr/lib/clang/12.0.5/include"/>
+					<Add directory="/Library/Developer/CommandLineTools/usr/include"/>
+					<Add directory="/System/Library/Frameworks"/>
+					<Add directory="/Library/Frameworks"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/Users/yuliang/Desktop/IT/COMP9024/assignment/web_crawler/cmake-build-debug/Makefile&quot;  VERBOSE=1 web_crawler/fast"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/Users/yuliang/Desktop/IT/COMP9024/assignment/web_crawler/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/Users/yuliang/Desktop/IT/COMP9024/assignment/web_crawler/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/Users/yuliang/Desktop/IT/COMP9024/assignment/web_crawler/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="/Users/yuliang/Desktop/IT/COMP9024/assignment/web_crawler/list.c">
+			<Option target="web_crawler"/>
+		</Unit>
+		<Unit filename="/Users/yuliang/Desktop/IT/COMP9024/assignment/web_crawler/list.h">
+			<Option target="web_crawler"/>
+		</Unit>
+		<Unit filename="/Users/yuliang/Desktop/IT/COMP9024/assignment/web_crawler/main.c">
+			<Option target="web_crawler"/>
+		</Unit>
+		<Unit filename="/Users/yuliang/Desktop/IT/COMP9024/assignment/web_crawler/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>
