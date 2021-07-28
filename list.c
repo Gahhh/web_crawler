@@ -258,6 +258,8 @@ bool list_contains (list list, string string) {
         } else {
             return false;
         }
+    } else {
+        return false;
     }
 }
 

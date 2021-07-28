@@ -24,7 +24,7 @@ int main() {
     printf("list should be empty: %s", list_is_empty(test1) ? "yes" : "no");
     // stack
     char *name = "abc";
-    for (int i; i<=10; i++) {
+    for (int i=0; i<=10; i++) {
         list_push(test1, name);
     }
     if (test1 != NULL) {
