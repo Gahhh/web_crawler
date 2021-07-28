@@ -6,7 +6,25 @@
 
 #IncludeRegexTransform: 
 
-/Users/yuliang/Desktop/IT/COMP9024/assignment/web_crawler/main.c
+/Users/yuliang/Desktop/IT/COMP9024/assignment/web_crawler/list.c
+stdbool.h
+-
+stddef.h
+-
+stdlib.h
+-
 stdio.h
+-
+string.h
+-
+assert.h
+-
+list.h
+/Users/yuliang/Desktop/IT/COMP9024/assignment/web_crawler/list.h
+
+/Users/yuliang/Desktop/IT/COMP9024/assignment/web_crawler/list.h
+stdbool.h
+-
+stddef.h
 -
 

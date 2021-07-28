@@ -65,7 +65,7 @@ void list_destroy (list list) {
 bool list_is_empty (list list) {
     if (!list) return false;
 
-    if (list->length != 0) {
+    if (list->length == 0) {
         return true;
     } else {
         return false;
@@ -119,7 +119,7 @@ string list_pop (list list) {
             return first->data;
         } else {
             list->head = list->head->next;
-            free(list->head->prev;
+            free(list->head->prev);
             list->head->prev= NULL;
             list->length--;
             return first->data;
@@ -190,7 +190,7 @@ void list_add (list list, string string) {
     new->data = strdup(string);
     if (list->head) {
         Node *p = list->head;
-        while(p && strcmp(p->data, string) == 0) {
+        while(p && strcmp(p->data, string) != 0) {
             p = p->next;
         }
         if (!p) {
@@ -215,7 +215,7 @@ void list_remove (list list,string string) {
     assert(list);
     if (list->head) {
         Node *p = list->head;
-        while(p && strcmp(p->data, string) == 0) {
+        while(p && strcmp(p->data, string) != 0) {
             p = p->next;
         }
 
