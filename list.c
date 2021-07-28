@@ -43,14 +43,17 @@ list list_create (void) {
  */
 void list_destroy (list list) {
     assert(list);
-    Node *node = list->head;
-    Node *temp = NULL;
-    while (node) {
-        temp = node;
-        node = node->next;
-        free(temp);
+    if (list->head != NULL) {
+        Node *no_cur = list->head;
+        Node *no_nex = NULL;
+        while (no_cur != NULL) {
+            no_nex = no_cur->next;
+            free(no_cur->data);
+            free(no_cur);
+            no_cur = no_nex;
+        }
+        free(list);
     }
-    free(list);
 }
 
 // misc interface
@@ -107,17 +110,20 @@ void list_push (list list,string string) {
 string list_pop (list list) {
     assert(list);
     if (list->head) {
-        string data = list->head->data;
-        if (list->head == list->tail) {
+        Node *first;
+        first = list->head;
+        if (list->tail == list->head) {
             free(list->head);
-            list->head = list->tail = NULL;
+            list->tail = list->head = NULL;
+            list->length--;
+            return first->data;
         } else {
             list->head = list->head->next;
-            free(list->head->prev);
-            list->head->prev = NULL;
+            free(list->head->prev;
+            list->head->prev= NULL;
+            list->length--;
+            return first->data;
         }
-        list->length--;
-        return data;
     } else {
         return NULL;
     }
@@ -151,17 +157,21 @@ void list_enqueue (list list,string string) {
 string list_dequeue (list list) {
     assert(list);
     if (list->tail) {
-        string data = list->tail->data;
+        Node *last;
+        last = list->tail;
         if (list->tail == list->head) {
             free(list->tail);
             list->tail = list->head = NULL;
+            list->length--;
+            return last->data;
         } else {
             list->tail = list->tail->prev;
             free(list->tail->next);
             list->tail->next = NULL;
+            list->length--;
+            return last->data;
+
         }
-        list->length--;
-        return data;
     } else {
         return NULL;
     }
@@ -201,13 +211,55 @@ void list_add (list list, string string) {
  * list_remove
  * remove an item from the set
  */
-void list_remove (list, string);
+void list_remove (list list,string string) {
+    assert(list);
+    if (list->head) {
+        Node *p = list->head;
+        while(p && strcmp(p->data, string) == 0) {
+            p = p->next;
+        }
+
+        if (p && p == list->head) {
+            list->head = list->head->next;
+            free(p);
+            list->head->prev = NULL;
+            list->length--;
+        } else if (p && p == list->tail) {
+            list->tail = list->tail->prev;
+            free(p);
+            list->tail->next = NULL;
+            list->length--;
+        } else if (!p){
+            return;
+        } else {
+            p->next->prev = p->prev;
+            p->prev->next = p->next;
+            free(p);
+            list->length--;
+        }
+    } else {
+        return;
+    }
+}
 /**
  * list_contains
  * return True if a particular item is in the set, False otherwise
  * return False on error
  */
-bool list_contains (list, string);
+bool list_contains (list list, string string) {
+    assert(list);
+    if (list->head) {
+        Node *p = list->head;
+        while(p && strcmp(p->data, string) == 0) {
+            p = p->next;
+        }
+        if (p) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
 
 // general interface
 // You do not need to implement these functions, but they could be useful internally or for testing...
