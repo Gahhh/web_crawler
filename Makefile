@@ -7,7 +7,7 @@ endif
 
 .PHONE: all clear
 
-all: ../crawler rankings
+all: ./crawler rankings
 
 crawler: crawler.c graph.c list.c graph.h list.h
 	$(CC) $(CFLAGS) -o $@ crawler.c graph.c list.c -lxml2 -lcurl -I/usr/include/libxml2
