@@ -279,13 +279,37 @@ void graph_add_edge (graph G, string vertex1, string vertex2, size_t weight) {
         }
     }
 }
+
+VNode find_vertex2 (graph G, string vertex1, string vertex2) {
+    if (!G) return NULL;
+    if (G->first) {
+        VNode *p = G->first;
+        while (p) {
+            if (strcmp(p->data, vertex1) == 0) {
+                ANode *temp = p->first;
+                while (temp && strcmp(temp->v_node->data, vertex2) != 0) {
+                    temp = temp->next;
+                }
+                return temp;
+            } else {
+                p = p->next;
+            }
+        }
+    } else {
+        return NULL;
+    }
+}
 /**
  * graph_has_edge
  * return True if a edge between two vertices exists in the graph, False otherwise
  * return False on error
  */
 bool graph_has_edge (graph G, string vertex1, string vertex2) {
-
+    if (find_vertex2(G, vertex1, vertex2)) {
+        return true;
+    } else {
+        return false;
+    }
 }
 /**
  * graph_remove_vertex
@@ -316,7 +340,6 @@ size_t graph_remove_edge (graph G, string vertex1, string vertex2) {
                         curr->next = next->next;
                         size_t data = next->weight;
                         free(next);
-                        next = curr->next;
                         G->nE--;
                         return data;
                     } else {
@@ -335,16 +358,52 @@ size_t graph_remove_edge (graph G, string vertex1, string vertex2) {
  * graph_set_edge
  * Update the weight of a edge between two vertices, if the edge doesn't exist do nothing
  */
-void graph_set_edge (graph G, string vertex1, string vertex2, size_t weight);
+void graph_set_edge (graph G, string vertex1, string vertex2, size_t weight) {
+    ANode *temp = find_vertex2(G, vertex1, vertex2);
+    if (temp) {
+        temp->weight = weight;
+    }
+}
 /**
  * graph_get_edge
  * return the weight of the edge between two vertices
  * return 0 on error
  */
-size_t graph_get_edge (graph G, string vertex1, string vertex2);
+size_t graph_get_edge (graph G, string vertex1, string vertex2) {
+    ANode *temp = find_vertex2(G, vertex1, vertex2);
+    if (temp) {
+        return temp->weight;
+    } else {
+        return 0;
+    }
+}
 /**
  * graph_edges_count
  * return the number of outgoing edges from a particular vertex in the graph
  * return 0 on error
  */
-size_t graph_edges_count (graph G, string vertex);
+size_t graph_edges_count (graph G, string vertex) {
+    if (!G) return NULL;
+    if (G->first) {
+        VNode *p = G->first;
+        while (p) {
+            if (strcmp(p->data, vertex) == 0) {
+                if (!p->first) {
+                    return 0;
+                } else {
+                    size_t count = 1;
+                    ANode *temp = p->first;
+                    while (temp) {
+                        count++;
+                        temp = temp->next;
+                    }
+                    return count;
+                }
+            } else {
+                p = p->next;
+            }
+        }
+    } else {
+        return 0;
+    }
+}
