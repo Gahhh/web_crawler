@@ -41,10 +41,9 @@ list list_create (void) {
  * list_destroy
  * free all memory associated with a given list
  */
-void list_destroy (list list) {
-    assert(list);
-    if (list->head != NULL) {
-        Node *no_cur = list->head;
+void list_destroy (list ddlist) {
+    if (ddlist->head != NULL) {
+        Node *no_cur = ddlist->head;
         Node *no_nex = NULL;
         while (no_cur != NULL) {
             no_nex = no_cur->next;
@@ -52,7 +51,7 @@ void list_destroy (list list) {
             free(no_cur);
             no_cur = no_nex;
         }
-        free(list);
+        free(ddlist);
     }
 }
 
@@ -62,10 +61,9 @@ void list_destroy (list list) {
  * return True if there are no items in the list, False otherwise
  * return False on error
  */
-bool list_is_empty (list list) {
-    if (!list) return false;
-
-    if (list->length == 0) {
+bool list_is_empty (list ddlist) {
+    if (!ddlist) return false;
+    if (ddlist->length == 0) {
         return true;
     } else {
         return false;
@@ -76,10 +74,10 @@ bool list_is_empty (list list) {
  * return the number of items in the list
  * return 0 on error
  */
-size_t list_length (list list) {
-    if (!list) return false;
+size_t list_length (list ddlist) {
+    if (!ddlist) return false;
 
-    return list->length;
+    return ddlist->length;
 }
 
 // stack interface
@@ -87,41 +85,39 @@ size_t list_length (list list) {
  * list_push
  * add an item to the head of the stack
  */
-void list_push (list list,string string) {
-    assert(list);
+void list_push (list ddlist, string value) {
     Node *new = malloc(sizeof(*new));
     new->next = NULL;
     new->prev = NULL;
-    new->data = strdup(string);
-    if (!list->head) {
-        list->tail = list->head = new;
+    new->data = strdup(value);
+    if (!ddlist->head) {
+        ddlist->tail = ddlist->head = new;
     } else {
-        new->next = list->head;
-        list->head->prev = new;
-        list->head = new;
+        new->next = ddlist->head;
+        ddlist->head->prev = new;
+        ddlist->head = new;
     }
-    list->length++;
+    ddlist->length++;
 }
 /**
  * list_pop
  * remove and return the item at the head of the stack
  * return NULL on error
  */
-string list_pop (list list) {
-    assert(list);
-    if (list->head) {
+string list_pop (list ddlist) {
+    if (ddlist->head) {
         Node *first;
-        first = list->head;
-        if (list->tail == list->head) {
-            free(list->head);
-            list->tail = list->head = NULL;
-            list->length--;
+        first = ddlist->head;
+        if (ddlist->tail == ddlist->head) {
+            free(ddlist->head);
+            ddlist->tail = ddlist->head = NULL;
+            ddlist->length--;
             return first->data;
         } else {
-            list->head = list->head->next;
-            free(list->head->prev);
-            list->head->prev= NULL;
-            list->length--;
+            ddlist->head = ddlist->head->next;
+            free(ddlist->head->prev);
+            ddlist->head->prev= NULL;
+            ddlist->length--;
             return first->data;
         }
     } else {
@@ -134,42 +130,39 @@ string list_pop (list list) {
  * list_enqueue
  * add an item to the head of the queue
  */
-void list_enqueue (list list,string string) {
-    assert(list);
+void list_enqueue (list ddlist,string value) {
     Node *new = malloc(sizeof(*new));
     new->next = NULL;
     new->prev = NULL;
-    new->data = strdup(string);
-    if (!list->head) {
-        list->tail = list->head = new;
+    new->data = strdup(value);
+    if (!ddlist->head) {
+        ddlist->tail = ddlist->head = new;
     } else {
-        new->next = list->head;
-        list->head->prev = new;
-        list->head = new;
+        new->next = ddlist->head;
+        ddlist->head->prev = new;
+        ddlist->head = new;
     }
-    list->length++;
+    ddlist->length++;
 }
 /**
  * list_dequeue
  * remove and return the item at the tail of the queue
  * return NULL on error
  */
-string list_dequeue (list list) {
-    assert(list);
-    if (list->tail) {
-        Node *last;
-        last = list->tail;
-        if (list->tail == list->head) {
-            free(list->tail);
-            list->tail = list->head = NULL;
-            list->length--;
-            return last->data;
+string list_dequeue (list ddlist) {
+    if (ddlist->tail) {
+        string data = ddlist->tail->data;
+        if (ddlist->tail == ddlist->head) {
+            free(ddlist->tail);
+            ddlist->tail = ddlist->head = NULL;
+            ddlist->length--;
+            return data;
         } else {
-            list->tail = list->tail->prev;
-            free(list->tail->next);
-            list->tail->next = NULL;
-            list->length--;
-            return last->data;
+            ddlist->tail = ddlist->tail->prev;
+            free(ddlist->tail->next);
+            ddlist->tail->next = NULL;
+            ddlist->length--;
+            return data;
 
         }
     } else {
@@ -182,60 +175,58 @@ string list_dequeue (list list) {
  * list_add
  * add an item into the set, if it is not already in the set
  */
-void list_add (list list, string string) {
-    assert(list);
+void list_add (list ddlist, string value) {
     Node *new = malloc(sizeof(*new));
     new->next = NULL;
     new->prev = NULL;
-    new->data = strdup(string);
-    if (list->head) {
-        Node *p = list->head;
-        while(p && strcmp(p->data, string) != 0) {
+    new->data = strdup(value);
+    if (ddlist->head) {
+        Node *p = ddlist->head;
+        while(p && strcmp(p->data, value) != 0) {
             p = p->next;
         }
         if (!p) {
-            list->tail->next = new;
-            new->prev = list->tail;
-            list->tail = new;
-            list->length++;
+            ddlist->tail->next = new;
+            new->prev = ddlist->tail;
+            ddlist->tail = new;
+            ddlist->length++;
         } else {
             free(new);
             return;
         }
     } else {
-        list->head = list->tail = new;
-        list->length++;
+        ddlist->head = ddlist->tail = new;
+        ddlist->length++;
     }
 }
 /**
  * list_remove
  * remove an item from the set
  */
-void list_remove (list list,string string) {
-    assert(list);
-    if (list->head) {
-        Node *p = list->head;
-        while(p && strcmp(p->data, string) != 0) {
+void list_remove (list ddlist,string value) {
+    if (ddlist->head) {
+        Node *p = ddlist->head;
+        while(p && strcmp(p->data, value) != 0) {
             p = p->next;
         }
 
-        if (p && p == list->head) {
-            list->head = list->head->next;
+        if (p && p == ddlist->head) {
+            ddlist->head = ddlist->head->next;
             free(p);
-            list->head->prev = NULL;
-            list->length--;
-        } else if (p && p == list->tail) {
-            list->tail = list->tail->prev;
+            ddlist->head->prev = NULL;
+            ddlist->length--;
+        } else if (p && p == ddlist->tail) {
+            ddlist->tail = ddlist->tail->prev;
             free(p);
-            list->tail->next = NULL;
-            list->length--;
+            ddlist->tail->next = NULL;
+            ddlist->length--;
         } else if (!p){
             return;
         } else {
             p->next->prev = p->prev;
             p->prev->next = p->next;
             free(p);
-            list->length--;
+            ddlist->length--;
         }
     } else {
         return;
@@ -246,11 +237,10 @@ void list_remove (list list,string string) {
  * return True if a particular item is in the set, False otherwise
  * return False on error
  */
-bool list_contains (list list, string string) {
-    assert(list);
-    if (list->head) {
-        Node *p = list->head;
-        while(p && strcmp(p->data, string) == 0) {
+bool list_contains (list ddlist, string value) {
+    if (ddlist->head) {
+        Node *p = ddlist->head;
+        while(p && strcmp(p->data, value) == 0) {
             p = p->next;
         }
         if (p) {

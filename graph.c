@@ -84,36 +84,19 @@ void graph_destroy (graph G) {
 void graph_show (graph G, FILE *file) {
     // identified two cases, if file is available, fprintf to the file,
     // if the file does not exist, then directly print to stdout.
-    if (file != stdout) {
-        vertex_node *p = G->first;
-        while (p) {
-            fprintf(file, "%s\n", p->data);
-            p = p->next;
+    vertex_node *p = G->first;
+    while (p) {
+        fprintf(file, "%s\n", p->data);
+        p = p->next;
+    }
+    p = G->first;
+    while (p) {
+        adjacent_node *temp = p->first;
+        while(temp) {
+            fprintf(file, "%s %s %lu\n", p->data, temp->v_node->data, temp->weight);
+            temp = temp->next;
         }
-        p = G->first;
-        while (p) {
-            adjacent_node *temp = p->first;
-            while(temp) {
-                fprintf(file, "%s %s %lu", p->data, temp->v_node->data, temp->weight);
-                temp = temp->next;
-            }
-            p = p->next;
-        }
-    } else {
-        vertex_node *p = G->first;
-        while (p) {
-            printf("%s\n", p->data);
-            p = p->next;
-        }
-        p = G->first;
-        while (p) {
-            adjacent_node *temp = p->first;
-            while(temp) {
-                printf("%s %s %lu", p->data, temp->v_node->data, temp->weight);
-                temp = temp->next;
-            }
-            p = p->next;
-        }
+        p = p->next;
     }
 }
 // vertex interface
@@ -143,6 +126,7 @@ void graph_add_vertex (graph G, string vertex) {
             new->first = NULL;
             G->last->next = new;
             new->prev = G->last;
+            G->last = new;
             G->nV++;
         }
 
@@ -157,17 +141,18 @@ bool graph_has_vertex (graph G, string vertex) {
     if (!G) return false;
     if (G->first) {
         vertex_node *p = G->first;
-        while (p && strcmp(vertex, p->data) != 0) {
-            p = p->next;
-        }
-        if (p) {
-            return true;
-        } else {
-            return false;
+        while (p) {
+
+            if (strcmp(vertex, p->data) == 0) {
+                return true;
+            } else {
+                p = p->next;
+            }
         }
     } else {
         return false;
     }
+    return false;
 }
 /**
  * graph_remove_vertex
@@ -181,30 +166,27 @@ void graph_remove_vertex (graph G, string vertex) {
             p = p->next;
         }
         if (p && G->first != G->last) {
-            while (p) {
-                if (p->first->next) {
-                    adjacent_node *curr = p->first;
-                    adjacent_node *next = p->first->next;
-                    while(next) {
-                        if (strcmp(next->v_node->data, vertex) == 0) {
-                            curr->next = next->next;
-                            free(next);
-                            next = curr->next;
-                            G->nE--;
-                        } else {
-                            curr = next;
-                            next = next->next;
-                        }
-                    }
-                } else {
-                    if (strcmp(p->first->v_node->data, vertex) == 0) {
-                        adjacent_node *temp = p->first;
-                        p->first = NULL;
-                        free(temp);
+            if (p->first->next) {
+                adjacent_node *curr = p->first;
+                adjacent_node *next = p->first->next;
+                while(next) {
+                    if (strcmp(next->v_node->data, vertex) == 0) {
+                        curr->next = next->next;
+                        free(next);
+                        next = curr->next;
                         G->nE--;
+                    } else {
+                        curr = next;
+                        next = next->next;
                     }
                 }
-                p = p->next;
+            } else {
+                if (strcmp(p->first->v_node->data, vertex) == 0) {
+                    adjacent_node *temp = p->first;
+                    p->first = NULL;
+                    free(temp);
+                    G->nE--;
+                }
             }
             p->next->prev = p->prev;
             p->prev->next = p->next;
@@ -212,6 +194,7 @@ void graph_remove_vertex (graph G, string vertex) {
             G->nV--;
         } else {
             G->first = G->last = NULL;
+            G->nV--;
             free(p);
         }
     }
@@ -244,28 +227,43 @@ void graph_add_edge (graph G, string vertex1, string vertex2, size_t weight) {
     vertex_node *p = G->first;
     while (p) {
         // vertex1 is located when the expression is true
+
         if (strcmp(p->data, vertex1) == 0) {
             adjacent_node *temp = p->first;
-            // this is to find if the edge is existed.
-            while (temp) {
-                if (strcmp(temp->v_node->data, vertex2) == 0) {
-                    return;
-                } else {
-                    // the edge is not existed, therefore, we add an adjacent node to this list
-                    if (!temp->next) {
-                        adjacent_node *new = malloc(sizeof(*new));
-                        temp->next = new;
-                        new->next = NULL;
-                        new->weight = weight;
-                        G->nE++;
-                        // this is to find the location of vertex2, and add its location to the adjacent node.
-                        vertex_node *p2 = G->first;
-                        while(p2 && strcmp(p2->data, vertex2) != 0) {
-                            p2 = p2->next;
-                        }
-                        new->v_node = p2;
+            if (!temp) {
+                adjacent_node *new = malloc(sizeof(*new));
+                new->next = NULL;
+                new->weight = weight;
+                G->nE++;
+                p->first = new;
+                vertex_node *p2 = G->first;
+                while(p2 && strcmp(p2->data, vertex2) != 0) {
+                    p2 = p2->next;
+                }
+                new->v_node = p2;
+                return;
+            } else {
+                // this is to find if the edge is existed.
+                while (temp) {
+                    if (strcmp(temp->v_node->data, vertex2) == 0) {
+                        return;
                     } else {
-                        temp = temp->next;
+                        // the edge is not existed, therefore, we add an adjacent node to this list
+                        if (!temp->next) {
+                            adjacent_node *new = malloc(sizeof(*new));
+                            temp->next = new;
+                            new->next = NULL;
+                            new->weight = weight;
+                            G->nE++;
+                            // this is to find the location of vertex2, and add its location to the adjacent node.
+                            vertex_node *p2 = G->first;
+                            while(p2 && strcmp(p2->data, vertex2) != 0) {
+                                p2 = p2->next;
+                            }
+                            new->v_node = p2;
+                        } else {
+                            temp = temp->next;
+                        }
                     }
                 }
             }
@@ -286,6 +284,7 @@ bool graph_has_edge (graph G, string vertex1, string vertex2) {
         while (p) {
             if (strcmp(p->data, vertex1) == 0) {
                 adjacent_node *temp = p->first;
+                //                printf("p->data: %s, vertex1: %s\n", temp->v_node->data, vertex2);
                 while (temp && strcmp(temp->v_node->data, vertex2) != 0) {
                     temp = temp->next;
                 }
@@ -312,6 +311,7 @@ size_t graph_remove_edge (graph G, string vertex1, string vertex2) {
     if (G->first) {
         vertex_node *p = G->first;
         while (p) {
+
             if (p->first && strcmp(p->data, vertex1) == 0) {
                 if (!p->first->next && strcmp(p->first->v_node->data, vertex2) == 0) {
                     adjacent_node *temp = p->first;
@@ -355,12 +355,15 @@ void graph_set_edge (graph G, string vertex1, string vertex2, size_t weight) {
         while (p) {
             if (strcmp(p->data, vertex1) == 0) {
                 adjacent_node *temp = p->first;
-                while (temp && strcmp(temp->v_node->data, vertex2) != 0) {
-                    temp = temp->next;
+                while (temp) {
+                    if (strcmp(temp->v_node->data, vertex2) == 0) {
+                        temp->weight = weight;
+                        return;
+                    } else {
+                        temp = temp->next;
+                    }
                 }
-                if (temp) {
-                    temp->weight = weight;
-                }
+                return;
             } else {
                 p = p->next;
             }
@@ -377,7 +380,7 @@ size_t graph_get_edge (graph G, string vertex1, string vertex2) {
     if (G->first) {
         vertex_node *p = G->first;
         while (p) {
-            if (strcmp(p->data, vertex1) == 0) {
+            if (p->first && strcmp(p->data, vertex1) == 0) {
                 adjacent_node *temp = p->first;
                 while (temp && strcmp(temp->v_node->data, vertex2) != 0) {
                     temp = temp->next;
@@ -421,4 +424,3 @@ size_t graph_edges_count (graph G, string vertex) {
     }
     return 0;
 }
-
