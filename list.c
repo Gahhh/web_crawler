@@ -42,15 +42,16 @@ list list_create (void) {
  * free all memory associated with a given list
  */
 void list_destroy (list ddlist) {
-    if (ddlist->head != NULL) {
+    if (ddlist->head) {
         Node *no_cur = ddlist->head;
-        Node *no_nex = NULL;
-        while (no_cur != NULL) {
-            no_nex = no_cur->next;
-            free(no_cur->data);
-            free(no_cur);
-            no_cur = no_nex;
+        while (no_cur) {
+            Node *temp = no_cur;
+            no_cur = no_cur->next;
+            free(temp->data);
+            free(temp);
+
         }
+        ddlist->length = 0;
         free(ddlist);
     }
 }
@@ -212,11 +213,13 @@ void list_remove (list ddlist,string value) {
 
         if (p && p == ddlist->head) {
             ddlist->head = ddlist->head->next;
+            free(p->data);
             free(p);
             ddlist->head->prev = NULL;
             ddlist->length--;
         } else if (p && p == ddlist->tail) {
             ddlist->tail = ddlist->tail->prev;
+            free(p->data);
             free(p);
             ddlist->tail->next = NULL;
             ddlist->length--;
@@ -225,6 +228,7 @@ void list_remove (list ddlist,string value) {
         } else {
             p->next->prev = p->prev;
             p->prev->next = p->next;
+            free(p->data);
             free(p);
             ddlist->length--;
         }
@@ -240,7 +244,7 @@ void list_remove (list ddlist,string value) {
 bool list_contains (list ddlist, string value) {
     if (ddlist->head) {
         Node *p = ddlist->head;
-        while(p && strcmp(p->data, value) == 0) {
+        while(p && strcmp(p->data, value) != 0) {
             p = p->next;
         }
         if (p) {

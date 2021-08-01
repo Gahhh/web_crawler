@@ -55,12 +55,11 @@ void graph_destroy (graph G) {
         return;
     } else {
         vertex_node *curr = G->first;
-        vertex_node *next = G->first->next;
         while (curr) {
-            free(curr->data);
-            free(curr);
-            curr = next;
-            next = next->next;
+            vertex_node *temp = curr;
+            curr = curr->next;
+            free(temp->data);
+            free(temp);
         }
         free(G);
     }
