@@ -7,22 +7,27 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include "graph.h"
+#include "pagerank.h"
 
 // define the structure of adjacent node
 typedef struct adjacent_node {
     struct vertex_node *v_node; // point to a vertex node
     size_t weight; // set the weight of this node
     struct adjacent_node *next; // point to the next adjacent node
-} adjacent_node; // AKA AN
+} adjacent_node;
 
 // define the structure of vertex node as a double linked list
 typedef struct vertex_node {
     string data; // the information that this vertex had
+    double oldrank; // old rank of the page
+    double pagerank; // current rank of the page;
+    size_t D; // the number of outbound edges of vertex;
     struct vertex_node *next; // point to the next vertex
     struct vertex_node *prev; // point to the previous vertex
     struct adjacent_node *first; // point to the first adjacent node
-} vertex_node; // AKA VN
+} vertex_node;
 
 // define the graph structure
 typedef struct Graph_Repr {
@@ -108,6 +113,9 @@ void graph_add_vertex (graph G, string vertex) {
     if (!G) return;
     if (!G->first) {
         vertex_node *new = malloc(sizeof(*new));
+        new->D = 0;
+        new->oldrank = 0;
+        new->pagerank = 0;
         new->first = NULL;
         new->next =new->prev = NULL;
         new->data = strdup(vertex);
@@ -120,6 +128,9 @@ void graph_add_vertex (graph G, string vertex) {
         }
         if (!p) {
             vertex_node *new = malloc(sizeof(*new));
+            new->D = 0;
+            new->oldrank = 0;
+            new->pagerank = 0;
             new->data = strdup(vertex);
             new->next = NULL;
             new->first = NULL;
@@ -141,7 +152,6 @@ bool graph_has_vertex (graph G, string vertex) {
     if (G->first) {
         vertex_node *p = G->first;
         while (p) {
-
             if (strcmp(vertex, p->data) == 0) {
                 return true;
             } else {
@@ -226,7 +236,6 @@ void graph_add_edge (graph G, string vertex1, string vertex2, size_t weight) {
     vertex_node *p = G->first;
     while (p) {
         // vertex1 is located when the expression is true
-
         if (strcmp(p->data, vertex1) == 0) {
             adjacent_node *temp = p->first;
             if (!temp) {
@@ -235,6 +244,7 @@ void graph_add_edge (graph G, string vertex1, string vertex2, size_t weight) {
                 new->weight = weight;
                 G->nE++;
                 p->first = new;
+                p->D++;
                 vertex_node *p2 = G->first;
                 while(p2 && strcmp(p2->data, vertex2) != 0) {
                     p2 = p2->next;
@@ -253,6 +263,7 @@ void graph_add_edge (graph G, string vertex1, string vertex2, size_t weight) {
                             temp->next = new;
                             new->next = NULL;
                             new->weight = weight;
+                            p->D++;
                             G->nE++;
                             // this is to find the location of vertex2, and add its location to the adjacent node.
                             vertex_node *p2 = G->first;
@@ -283,7 +294,6 @@ bool graph_has_edge (graph G, string vertex1, string vertex2) {
         while (p) {
             if (strcmp(p->data, vertex1) == 0) {
                 adjacent_node *temp = p->first;
-                //                printf("p->data: %s, vertex1: %s\n", temp->v_node->data, vertex2);
                 while (temp && strcmp(temp->v_node->data, vertex2) != 0) {
                     temp = temp->next;
                 }
@@ -310,7 +320,6 @@ size_t graph_remove_edge (graph G, string vertex1, string vertex2) {
     if (G->first) {
         vertex_node *p = G->first;
         while (p) {
-
             if (p->first && strcmp(p->data, vertex1) == 0) {
                 if (!p->first->next && strcmp(p->first->v_node->data, vertex2) == 0) {
                     adjacent_node *temp = p->first;
@@ -318,6 +327,7 @@ size_t graph_remove_edge (graph G, string vertex1, string vertex2) {
                     size_t data = temp->weight;
                     free(temp);
                     G->nE--;
+                    p->D--;
                     return data;
                 } else if (!p->first->next && strcmp(p->first->v_node->data, vertex2) != 0) {
                     return 0;
@@ -330,6 +340,7 @@ size_t graph_remove_edge (graph G, string vertex1, string vertex2) {
                         size_t data = next->weight;
                         free(next);
                         G->nE--;
+                        p->D--;
                         return data;
                     } else {
                         curr = curr->next;
@@ -423,3 +434,51 @@ size_t graph_edges_count (graph G, string vertex) {
     }
     return 0;
 }
+
+bool is_accepted_differ(graph G, double delta) {
+    vertex_node *p = G->first;
+    while(p) {
+        if (fabs(p->oldrank - p->pagerank) > delta) {
+            return false;
+        } else {
+            p = p->next;
+        }
+    }
+    return true;
+}
+
+
+
+void graph_pagerank(graph G, double damping, double delta) {
+    size_t N = graph_vertices_count(G);
+    if (N == 0) return;
+    vertex_node *p = G->first;
+    while (p) {
+        p->oldrank = 0;
+        p->pagerank = 1/N;
+        p = p->next;
+    }
+    while (!is_accepted_differ(G, delta)) {
+        vertex_node *p = G->first;
+        while (p) {
+            p->oldrank = p->pagerank;
+            p = p->next;
+        }
+        double sink_rank = 0;
+
+    }
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+void graph_viewrank(graph G, FILE *file);
