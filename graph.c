@@ -23,10 +23,12 @@ typedef struct vertex_node {
     string data; // the information that this vertex had
     double oldrank; // old rank of the page
     double pagerank; // current rank of the page;
+    double sink_rank; // for pagerank
     size_t D; // the number of outbound edges of vertex;
     struct vertex_node *next; // point to the next vertex
     struct vertex_node *prev; // point to the previous vertex
     struct adjacent_node *first; // point to the first adjacent node
+    struct adjacent_node *inbound_first; // record the vertices which have edges point to this vertex
 } vertex_node;
 
 // define the graph structure
@@ -37,23 +39,107 @@ typedef struct Graph_Repr {
     int nE; // record the total number of edges
 } Graph_Repr;
 
+// utility functions
+
+// This function is used in page_rank calculation, which is to calculate if all the pagerank is accurately enough.
+bool is_differ_accepted (graph G, double delta) {
+    vertex_node *p = G->first;
+    while(p) {
+        if (fabs(p->oldrank - p->pagerank) > delta) {
+            return false;
+        } else {
+            p = p->next;
+        }
+    }
+    return true;
+}
+
+// this function is to record the inbound node for the vertex.
+void vertex_add_inbound_node (graph G, vertex_node *vertex1, vertex_node *vertex2) {
+    adjacent_node *new = malloc(sizeof(*new));
+    new->next = NULL;
+    new->weight = 0;
+    new->v_node = vertex1;
+    if (vertex2->inbound_first) {
+        adjacent_node *p = vertex2->inbound_first;
+        while (p->next) {
+            p = p->next;
+        }
+        p->next = new;
+    } else {
+        vertex2->inbound_first = new;
+    }
+}
+
+void adjacent_remove_inbound_node (graph G, adjacent_node *adj, vertex_node *vertex1, vertex_node *vertex2) {
+    if (adj->next) {
+        while (adj->next) {
+            if (strcmp(adj->next->v_node->data, vertex1->data) == 0) {
+                adjacent_node *temp = adj->next;
+                adj->next = adj->next->next;
+                free(temp);
+                return;
+            } else {
+                adj = adj->next;
+            }
+        }
+    } else {
+        adj = NULL;
+        vertex2->inbound_first = NULL;
+        free(adj);
+    }
+}
+
+// This function is to remove inbound node when its relevant edge has been removed.
+void vertex_remove_inbound_node (graph G, vertex_node *vertex1, string v2_data) {
+    if (!vertex1->first->next && strcmp(vertex1->first->v_node->data, v2_data) == 0) {
+        adjacent_node *p = vertex1->first->v_node->inbound_first;
+        vertex_node *vertex2 = vertex1->first->v_node;
+        adjacent_remove_inbound_node(G, p, vertex1, vertex2);
+    } else {
+        adjacent_node *p = vertex1->first;
+        while(p) {
+            if (strcmp(p->v_node->data, v2_data) == 0) {
+                adjacent_node *p2 = p->v_node->inbound_first;
+                vertex_node *vertex2 = p->v_node;
+                adjacent_remove_inbound_node(G, p2, vertex1, vertex2);
+            } else {
+                p = p->next;
+            }
+        }
+    }
+}
+
+// This function is to add adjacent node to the vertex.
+void vertex_add_adjacent_node (graph G, vertex_node *vertex1, string v2_data, adjacent_node *temp, size_t weight) {
+    adjacent_node *new = malloc(sizeof(*new));
+    new->next = NULL;
+    new->weight = weight;
+    G->nE++;
+    vertex1->D++;
+    if (!temp) {
+        vertex1->first = new;
+    } else {
+        temp->next = new;
+    }
+    vertex_node *p2 = G->first;
+    while(p2 && strcmp(p2->data, v2_data) != 0) {
+        p2 = p2->next;
+    }
+    new->v_node = p2;
+    vertex_add_inbound_node(G, vertex1, p2);
+}
+
+
+
 // meta interface
-/**
- * graph_create
- * allocate the required memory for a new graph
- * return a pointer to the new graph
- * return NULL on error
- */
 graph graph_create (void) {
     graph g = malloc(sizeof(*g));
     g->first = g->last = NULL;
     g->nE = g->nV = 0;
     return g;
 }
-/**
- * graph_destroy
- * free all memory associated with a given graph
- */
+
 void graph_destroy (graph G) {
     if (G->first == NULL) {
         free(G);
@@ -69,22 +155,7 @@ void graph_destroy (graph G) {
         free(G);
     }
 }
-/**
- * graph_show
- * print the contents of the graph to the given file
- * If the given file is NULL, print to stdout
- * The graph should be printed in the following format:
- *      vertex1
- *      vertex2
- *      vertex3
- *      ...
- *      vertexN
- *      vertex1 vertex2 weight
- *      vertex2 vertex4 weight
- *      vertexN vertex4 weight
- * Where the name name of each vertex is first printed
- * Then the directed edges between each vertex along with the edge weight is printed
- */
+
 void graph_show (graph G, FILE *file) {
     // identified two cases, if file is available, fprintf to the file,
     // if the file does not exist, then directly print to stdout.
@@ -104,18 +175,13 @@ void graph_show (graph G, FILE *file) {
     }
 }
 // vertex interface
-/**
- * graph_add_vertex
- * Add a new vertex with a particular value to the graph
- * if a vertex with the same value already exists do not add a new vertex
- */
+
 void graph_add_vertex (graph G, string vertex) {
     if (!G) return;
     if (!G->first) {
         vertex_node *new = malloc(sizeof(*new));
-        new->D = 0;
-        new->oldrank = 0;
-        new->pagerank = 0;
+        new->D = new->oldrank = new->pagerank = new->sink_rank = 0;
+        new->inbound_first = NULL;
         new->first = NULL;
         new->next =new->prev = NULL;
         new->data = strdup(vertex);
@@ -128,12 +194,11 @@ void graph_add_vertex (graph G, string vertex) {
         }
         if (!p) {
             vertex_node *new = malloc(sizeof(*new));
-            new->D = 0;
-            new->oldrank = 0;
-            new->pagerank = 0;
+            new->D = new->oldrank = new->pagerank = new->sink_rank = 0;
             new->data = strdup(vertex);
             new->next = NULL;
             new->first = NULL;
+            new->inbound_first = NULL;
             G->last->next = new;
             new->prev = G->last;
             G->last = new;
@@ -142,11 +207,7 @@ void graph_add_vertex (graph G, string vertex) {
 
     }
 }
-/**
- * graph_has_vertex
- * return True if a vertex with a particular value exists in the graph, False otherwise
- * return False on error
- */
+
 bool graph_has_vertex (graph G, string vertex) {
     if (!G) return false;
     if (G->first) {
@@ -163,14 +224,33 @@ bool graph_has_vertex (graph G, string vertex) {
     }
     return false;
 }
-/**
- * graph_remove_vertex
- * Remove a vertex with a particular value from the graph
- */
+
 void graph_remove_vertex (graph G, string vertex) {
     if (!G) return;
     if (G->first) {
         vertex_node *p = G->first;
+        // This is to remove all the inbound nodes of which vertex have edges with.
+        while (p) {
+            adjacent_node *adj = p->inbound_first;
+            if (adj->next) {
+                while (adj->next) {
+                    if (strcmp(adj->next->v_node->data, vertex) == 0) {
+                        adjacent_node *temp = adj->next;
+                        adj->next = adj->next->next;
+                        free(temp);
+                    } else {
+                        adj = adj->next;
+                    }
+                }
+            } else {
+                if (strcmp(adj->v_node->data, vertex) == 0) {
+                    free(adj);
+                    p->inbound_first = NULL;
+                }
+            }
+            p = p->next;
+        }
+        p = G->first;
         while (p && strcmp(vertex, p->data) != 0) {
             p = p->next;
         }
@@ -208,11 +288,7 @@ void graph_remove_vertex (graph G, string vertex) {
         }
     }
 }
-/**
- * graph_vertices_count
- * return the number of vertices in the graph
- * return 0 on error
- */
+
 size_t graph_vertices_count (graph G) {
     if (G) {
         return G->nV;
@@ -222,11 +298,7 @@ size_t graph_vertices_count (graph G) {
 }
 
 // edge interface
-/**
- * graph_add_edge
- * Add a new edge between two vertices with a weight to the graph
- * if a edge between two vertices already exists do not add a new edge
- */
+
 void graph_add_edge (graph G, string vertex1, string vertex2, size_t weight) {
     if (!G) return;
     // These two 'if' expression below is to add the vertex to the graph if it does not exist in the graph
@@ -239,17 +311,7 @@ void graph_add_edge (graph G, string vertex1, string vertex2, size_t weight) {
         if (strcmp(p->data, vertex1) == 0) {
             adjacent_node *temp = p->first;
             if (!temp) {
-                adjacent_node *new = malloc(sizeof(*new));
-                new->next = NULL;
-                new->weight = weight;
-                G->nE++;
-                p->first = new;
-                p->D++;
-                vertex_node *p2 = G->first;
-                while(p2 && strcmp(p2->data, vertex2) != 0) {
-                    p2 = p2->next;
-                }
-                new->v_node = p2;
+                vertex_add_adjacent_node(G, p, vertex2, temp, weight);
                 return;
             } else {
                 // this is to find if the edge is existed.
@@ -259,18 +321,8 @@ void graph_add_edge (graph G, string vertex1, string vertex2, size_t weight) {
                     } else {
                         // the edge is not existed, therefore, we add an adjacent node to this list
                         if (!temp->next) {
-                            adjacent_node *new = malloc(sizeof(*new));
-                            temp->next = new;
-                            new->next = NULL;
-                            new->weight = weight;
-                            p->D++;
-                            G->nE++;
-                            // this is to find the location of vertex2, and add its location to the adjacent node.
-                            vertex_node *p2 = G->first;
-                            while(p2 && strcmp(p2->data, vertex2) != 0) {
-                                p2 = p2->next;
-                            }
-                            new->v_node = p2;
+                            vertex_add_adjacent_node(G, p, vertex2, temp, weight);
+                            return;
                         } else {
                             temp = temp->next;
                         }
@@ -282,11 +334,7 @@ void graph_add_edge (graph G, string vertex1, string vertex2, size_t weight) {
         }
     }
 }
-/**
- * graph_has_edge
- * return True if a edge between two vertices exists in the graph, False otherwise
- * return False on error
- */
+
 bool graph_has_edge (graph G, string vertex1, string vertex2) {
     if(!G) return false;
     if (G->first) {
@@ -309,12 +357,7 @@ bool graph_has_edge (graph G, string vertex1, string vertex2) {
     }
     return false;
 }
-/**
- * graph_remove_vertex
- * Remove a edge between two vertices from the graph
- * return the weight of the edge
- * return 0 on error
- */
+
 size_t graph_remove_edge (graph G, string vertex1, string vertex2) {
     if (!G) return 0;
     if (G->first) {
@@ -323,6 +366,7 @@ size_t graph_remove_edge (graph G, string vertex1, string vertex2) {
             if (p->first && strcmp(p->data, vertex1) == 0) {
                 if (!p->first->next && strcmp(p->first->v_node->data, vertex2) == 0) {
                     adjacent_node *temp = p->first;
+                    vertex_remove_inbound_node(G, p, vertex2);
                     p->first = NULL;
                     size_t data = temp->weight;
                     free(temp);
@@ -338,6 +382,7 @@ size_t graph_remove_edge (graph G, string vertex1, string vertex2) {
                     if (strcmp(next->v_node->data, vertex2) == 0) {
                         curr->next = next->next;
                         size_t data = next->weight;
+                        vertex_remove_inbound_node(G, p, vertex2);
                         free(next);
                         G->nE--;
                         p->D--;
@@ -354,10 +399,7 @@ size_t graph_remove_edge (graph G, string vertex1, string vertex2) {
     }
     return 0;
 }
-/**
- * graph_set_edge
- * Update the weight of a edge between two vertices, if the edge doesn't exist do nothing
- */
+
 void graph_set_edge (graph G, string vertex1, string vertex2, size_t weight) {
     if (!G) return;
     if (G->first) {
@@ -380,11 +422,7 @@ void graph_set_edge (graph G, string vertex1, string vertex2, size_t weight) {
         }
     }
 }
-/**
- * graph_get_edge
- * return the weight of the edge between two vertices
- * return 0 on error
- */
+
 size_t graph_get_edge (graph G, string vertex1, string vertex2) {
     if (!G) return 0;
     if (G->first) {
@@ -405,11 +443,7 @@ size_t graph_get_edge (graph G, string vertex1, string vertex2) {
     }
     return 0;
 }
-/**
- * graph_edges_count
- * return the number of outgoing edges from a particular vertex in the graph
- * return 0 on error
- */
+
 size_t graph_edges_count (graph G, string vertex) {
     if (!G) return 0;
     if (G->first) {
@@ -435,50 +469,59 @@ size_t graph_edges_count (graph G, string vertex) {
     return 0;
 }
 
-bool is_accepted_differ(graph G, double delta) {
-    vertex_node *p = G->first;
-    while(p) {
-        if (fabs(p->oldrank - p->pagerank) > delta) {
-            return false;
-        } else {
-            p = p->next;
-        }
-    }
-    return true;
-}
-
-
-
 void graph_pagerank(graph G, double damping, double delta) {
-    size_t N = graph_vertices_count(G);
+    size_t N_vertices = graph_vertices_count(G);
+    double N = N_vertices;
     if (N == 0) return;
-    vertex_node *p = G->first;
+    vertex_node *p = G->first; // This temporary pointer is to initialise the rank value
     while (p) {
         p->oldrank = 0;
         p->pagerank = 1/N;
         p = p->next;
     }
-    while (!is_accepted_differ(G, delta)) {
-        vertex_node *p = G->first;
+    while (!is_differ_accepted(G, delta)) {
+        p = G->first; // This temporary pointer is to update the oldrank value with current one
         while (p) {
             p->oldrank = p->pagerank;
             p = p->next;
         }
-        double sink_rank = 0;
-
+        p = G->first; // This temporary pointer is to find vertices with no outbound edges.
+        while (p) {
+            if (!p->D) {
+                p->sink_rank = p->sink_rank + (damping *(p->oldrank/N));
+            }
+            p = p->next;
+        }
+        p = G->first; // This temporary pointer is to update the pagerank by sink_rank
+        while (p) {
+            p->pagerank = p->sink_rank + ((1-damping)/N);
+            adjacent_node *adj = p->inbound_first;
+            while (adj) {
+                double D = adj->v_node->D; // convert data type from size_t to double
+                printf("edges from I: %lu, I: %s\n", adj->v_node->D, adj->v_node->data);
+                adj->v_node->pagerank = p->pagerank + ((damping*adj->v_node->oldrank)/D);
+                adj = adj->next;
+            }
+            p = p->next;
+        }
     }
-
 }
 
-
-
-
-
-
-
-
-
-
-
-
-void graph_viewrank(graph G, FILE *file);
+void graph_viewrank(graph G, FILE *file) {
+    vertex_node *p = G->first;
+    printf(" \n");
+    while (p) {
+        adjacent_node *temp = p->inbound_first;
+        while(temp) {
+            printf("inbound: from %s | to %s\n", temp->v_node->data, p->data);
+            temp = temp->next;
+        }
+        p = p->next;
+    }
+    printf(" \n");
+    p = G->first;
+    while (p) {
+        fprintf(file, "%s (%f)\n", p->data, p->pagerank);
+        p = p->next;
+    }
+}

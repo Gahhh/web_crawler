@@ -22,6 +22,7 @@
 
 #include "list.h"
 #include "graph.h"
+#include "pagerank.h"
 
 /* resizable buffer */
 typedef struct memory {
@@ -37,37 +38,6 @@ CURL  *make_handle (string);
 size_t grow_buffer (void *, size_t, size_t, void *);
 void   add_or_increment_edge(graph, string, string);
 
-typedef struct List_Repr {
-    struct Node *head;
-    size_t length;
-    struct Node *tail;
-} List_Repr;
-
-typedef struct Node {
-    string data;
-    struct Node *next;
-    struct Node *prev;
-} Node;
-
-void DLLshow(list lt)
-{
-    // TODO: replace this with your code
-    // make the compiler happy
-    if (lt != NULL) {
-        struct Node *p;
-        printf("\n");
-        printf("\n");
-        for (p=lt->head; p != NULL; p=p->next) {
-            printf("%s\n", p->data);
-        }
-    }
-    printf("\n");
-    printf("\n");
-}
-
-
-
-
 int main(int argc, char **argv)
 {
     if (argc != 2) {
@@ -81,10 +51,6 @@ int main(int argc, char **argv)
 
     graph network = NULL;
     if (strstr(argv[1], "cse.unsw.edu.au") || strstr(argv[1], "localhost")) {
-
-        printf("\n");
-        printf("\n");
-        printf("argv[1]: %s\n", argv[1]);
         network = follow_link(argv[1]);
     } else {
         fprintf(stderr, "refusing to touch non CSE pages.");
@@ -92,6 +58,8 @@ int main(int argc, char **argv)
     }
 
     graph_show(network, stdout);
+    graph_pagerank(network, 0.85, 0.00001);
+    graph_viewrank(network, stdout);
     graph_destroy(network);
 
     return EXIT_SUCCESS;
@@ -106,7 +74,6 @@ graph follow_link(string base_url)
     graph network = graph_create();
     list_enqueue(queue, base_url);
     list_add(visited, base_url);
-//    DLLshow(queue);
     while (!list_is_empty(queue)) {
         char *url, *ctype;
         memory *mem;
@@ -117,19 +84,13 @@ graph follow_link(string base_url)
         curl_easy_getinfo(handle, CURLINFO_CONTENT_TYPE, &ctype);
         curl_easy_getinfo(handle, CURLINFO_PRIVATE, &mem);
         curl_easy_getinfo(handle, CURLINFO_EFFECTIVE_URL, &url);
-        printf("\n");
-        printf("\n");
-        printf("base_url: %s\n", base_url);
-        printf("\n");
-        printf("\n");
+
         if (res == CURLE_OK) {
             long res_status;
             curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, &res_status);
             if (res_status == 200) {
                 printf("HTTP 200: %s\n", base_url);
-                printf("10\n");
                 if (is_html(ctype)) {
-                    printf("1\n");
                     find_links(queue, visited, network, mem, url, base_url);
                 }
             } else {
@@ -181,7 +142,6 @@ void find_links(list queue, list visited, graph network, memory *mem, string url
         href = xmlBuildURI(href, (xmlChar *) url);
         xmlFree(orig);
         char *link = (char *) href;
-
         if (!link) continue;
         // attempt some form on normalisation by removing any queries or fragments
         if (strchr(link, '?')) *strchr(link, '?') = '\0';
@@ -189,16 +149,9 @@ void find_links(list queue, list visited, graph network, memory *mem, string url
         // we only want a map of hyperlinks, so restrict the scheme to http[s]
         if (!strncmp(link, "http://", 7) || !strncmp(link, "https://", 8)) {
             // use `base_url` not url as `url` has had redirects dereferenced
-
             add_or_increment_edge(network, base_url, link);
             // have some manners and restrict hyperlinks to domains inside UNSW CSE, and that we haven't already visited.
-            printf("\n");
-            printf("\n");
-            printf("link contains: %d\n", list_contains(visited, link));
-            printf("\n");
-            printf("\n");
             if ((strstr(link, "cse.unsw.edu.au") || strstr(link, "localhost")) && !list_contains(visited, link)) {
-
                 list_add(visited, link);
                 list_enqueue(queue, link);
             }
