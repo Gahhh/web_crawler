@@ -571,6 +571,9 @@ void graph_pagerank(graph G, double damping, double delta) {
 }
 
 void graph_viewrank(graph G, FILE *file) {
+    if (!file) {
+        file = stdout;
+    }
     Vertex_Node *p = G->first;
     while (p) {
         fprintf(file, "%s (%.3f)\n", p->data, p->pagerank);
