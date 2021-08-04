@@ -41,9 +41,7 @@ typedef struct Graph_Repr {
     int nE; // record the total number of edges
 } Graph_Repr;
 
-
-//============================================================================================================
-// utility functions
+// ==================================================utility functions==================================================
 
 // This function is used in page_rank calculation, which is to calculate if all the pagerank is accurately enough.
 bool is_differ_accepted (graph G, double delta) {
@@ -136,20 +134,19 @@ void vertex_add_Adjacent_Node (graph G, Vertex_Node *vertex1, string v2_data, Ad
 
 // This function is to help sort function to swap two vertices
 void vertex_swap (graph G, Vertex_Node *vertex1, Vertex_Node *vertex2) {
-    Vertex_Node *temp = vertex2;
     if (vertex1->next) {
         vertex1->next->prev = vertex2;
         vertex2->next = vertex1->next;
-        vertex2->prev = vertex1;
+        vertex2->prev->next = vertex1;
         vertex1->next = vertex2;
-        vertex1->prev = temp->prev;
-        temp->next = vertex1;
+        vertex1->prev = vertex2->prev;
+        vertex2->prev = vertex1;
     } else {
         vertex2->next = NULL;
-        vertex2->prev = vertex1;
+        vertex2->prev->next = vertex1;
         vertex1->next = vertex2;
-        temp->prev->next = vertex1;
-        vertex1->prev = temp->prev;
+        vertex1->prev = vertex2->prev;
+        vertex2->prev = vertex1;
         G->last = vertex2;
     }
 
@@ -161,17 +158,19 @@ void graph_sorted(graph G, double epsilon) {
     if (!G->first) return;
 
     Vertex_Node *p1 = G->first;
-    while (p1->next) {
+    while (p1) {
         Vertex_Node *p2 = p1->next;
-        while(p2->prev) {
+        while(p2 && p2->prev) {
             if ((p2->pagerank - p2->prev->pagerank) > epsilon) {
                 vertex_swap(G, p2, p2->prev);
                 p2 = p2->prev;
-            } else if (fabs(p2->pagerank, p2->prev->pagerank) < epsilon) {
+            } else if (fabs(p2->pagerank - p2->prev->pagerank) < epsilon) {
                 if (strcmp(p2->data, p2->prev->data) < 0) {
                     vertex_swap(G, p2, p2->prev);
+                    p2 = p2->prev;
+                } else {
+                    p2 = p2->prev;
                 }
-                p2 = p2->prev;
             } else {
                 p2 = p2->prev;
             }
@@ -184,9 +183,11 @@ void graph_sorted(graph G, double epsilon) {
         }
     }
 }
+//======================================================================================================================
 
-//============================================================================================================
-// meta interface
+
+//======================================meta interface==================================================================
+
 graph graph_create (void) {
     graph g = malloc(sizeof(*g));
     g->first = g->last = NULL;
@@ -237,12 +238,15 @@ void graph_add_vertex (graph G, string vertex) {
     if (!G) return;
     if (!G->first) {
         Vertex_Node *new = malloc(sizeof(*new));
-        new->D = new->oldrank = new->pagerank = 0;
+        new->D = 0;
+        new->oldrank = 0;
+        new->pagerank = 0;
         new->inbound_first = NULL;
         new->first = NULL;
         new->next =new->prev = NULL;
         new->data = strdup(vertex);
-        G->first = G->last = new;
+        G->first = new;
+        G->last = new;
         G->nV++;
     } else {
         Vertex_Node *p = G->first;
@@ -251,17 +255,18 @@ void graph_add_vertex (graph G, string vertex) {
         }
         if (!p) {
             Vertex_Node *new = malloc(sizeof(*new));
-            new->D = new->oldrank = new->pagerank = 0;
-            new->data = strdup(vertex);
-            new->next = NULL;
-            new->first = NULL;
+            new->D = 0;
+            new->oldrank = 0;
+            new->pagerank = 0;
             new->inbound_first = NULL;
+            new->first = NULL;
+            new->next =new->prev = NULL;
+            new->data = strdup(vertex);
             G->last->next = new;
             new->prev = G->last;
             G->last = new;
             G->nV++;
         }
-
     }
 }
 

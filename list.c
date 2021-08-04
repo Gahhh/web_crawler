@@ -256,10 +256,3 @@ bool list_contains (list ddlist, string value) {
         return false;
     }
 }
-
-// general interface
-// You do not need to implement these functions, but they could be useful internally or for testing...
-//void   list_append   (list, string);
-//string list_shrink   (list);
-//void   list_prepend  (list, string);
-//string list_shift    (list);
