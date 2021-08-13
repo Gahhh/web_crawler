@@ -14,6 +14,8 @@
 #include "pagerank.h"
 #include "dijkstra.h"
 
+#define MAX_VALUE 2147483647
+
 // define the structure of adjacent node
 typedef struct Adjacent_Node {
     struct Vertex_Node *v_node; // point to a vertex node
@@ -31,6 +33,10 @@ typedef struct Vertex_Node {
     struct Vertex_Node *prev; // point to the previous vertex
     struct Adjacent_Node *first; // point to the first adjacent node
     struct Adjacent_Node *inbound_first; // record the vertices which have edges point to this vertex
+    struct Vertex_Node *pred; // used for Dijkstra
+    size_t dist; // used for Dijkstra
+    bool source; // used for Dijkstra to identify the source node
+    bool visited; // used for Dijkstra
 } Vertex_Node;
 
 // define the graph structure
@@ -40,8 +46,68 @@ typedef struct Graph_Repr {
     int nV; // record the total number of vertex
     int nE; // record the total number of edges
 } Graph_Repr;
+// ================================Struct and utility functions for Dijkstra============================================
+typedef struct List_Repr {
+    struct Node *head;
+    size_t length;
+    struct Node *tail;
+} List_Repr;
 
-// ==================================================utility functions==================================================
+typedef struct Node {
+    struct Vertex_Node *node_vertex;
+    struct Node *next;
+    struct Node *prev;
+} Node;
+
+void graph_dijkstra_enqueue (list ddlist, Vertex_Node *value) {
+    Node *new = malloc(sizeof(*new));
+    new->next = NULL;
+    new->prev = NULL;
+    new->node_vertex = value;
+    if (!ddlist->head) {
+        ddlist->tail = ddlist->head = new;
+    } else {
+        new->next = ddlist->head;
+        ddlist->head->prev = new;
+        ddlist->head = new;
+    }
+    ddlist->length++;
+}
+
+Vertex_Node* graph_dijkstra_dequeue (list ddlist) {
+    if (ddlist->tail) {
+        Vertex_Node *data = ddlist->tail->node_vertex;
+        if (ddlist->tail == ddlist->head) {
+            free(ddlist->tail);
+            ddlist->tail = ddlist->head = NULL;
+            ddlist->length--;
+            return data;
+        } else {
+            ddlist->tail = ddlist->tail->prev;
+            free(ddlist->tail->next);
+            ddlist->tail->next = NULL;
+            ddlist->length--;
+            return data;
+        }
+    } else {
+        return NULL;
+    }
+}
+
+void graph_dijkstra_destroy (list ddlist) {
+    if (ddlist->head) {
+        Node *no_cur = ddlist->head;
+        while (no_cur) {
+            Node *temp = no_cur;
+            no_cur = no_cur->next;
+            free(temp);
+        }
+        ddlist->length = 0;
+    }
+    free(ddlist);
+}
+
+// ===========================================utility functions=========================================================
 
 // This function is used in page_rank calculation, which is to calculate if all the pagerank is accurately enough.
 bool is_differ_accepted (graph G, double delta) {
@@ -241,10 +307,14 @@ void graph_add_vertex (graph G, string vertex) {
         new->D = 0;
         new->oldrank = 0;
         new->pagerank = 0;
+        new->visited = false;
         new->inbound_first = NULL;
         new->first = NULL;
         new->next =new->prev = NULL;
         new->data = strdup(vertex);
+        new->pred = NULL;
+        new->source = false;
+        new->dist = MAX_VALUE;
         G->first = new;
         G->last = new;
         G->nV++;
@@ -258,6 +328,10 @@ void graph_add_vertex (graph G, string vertex) {
             new->D = 0;
             new->oldrank = 0;
             new->pagerank = 0;
+            new->pred = NULL;
+            new->dist = MAX_VALUE;
+            new->source = false;
+            new->visited = false;
             new->inbound_first = NULL;
             new->first = NULL;
             new->next =new->prev = NULL;
@@ -579,4 +653,88 @@ void graph_viewrank(graph G, FILE *file) {
         fprintf(file, "%s (%.3f)\n", p->data, p->pagerank);
         p = p->next;
     }
+}
+
+void graph_shortest_path(graph G, string source) {
+    if (!G) return;
+    if(!G->first->next) return;
+
+    // Create a queue for the nodes
+    list queue = list_create();
+    Vertex_Node *p = G->first;
+
+    // This is to find the position of source node, and mark it as source.
+    while (p && strcmp(p->data, source) != 0) {
+        p = p->next;
+    }
+    if (p) {
+        p->source = true;
+        p->dist = 0;
+        Adjacent_Node *adj = p->first;
+
+        // This while loop is to initialize and enqueue all the nodes which have been pointed from the source node
+        while (adj) {
+            graph_dijkstra_enqueue(queue, adj->v_node);
+            adj->v_node->pred = p;
+            adj->v_node->dist = 1;
+            adj->v_node->visited = true;
+            adj = adj->next;
+        }
+
+        // This is to start the Dijkstra algorithm, for these nodes have been visited, we will compare the path value,
+        // for these nodes have not been visited, we will add it to the queue.
+        // After the queue become empty, all nodes' dist and pred will be identified.
+        while (queue->length) {
+            Vertex_Node *vertex = graph_dijkstra_dequeue(queue);
+            size_t curr_dist = vertex->dist;
+            if (vertex->first) {
+                Adjacent_Node *adj2 = vertex->first;
+                while (adj2) {
+                    if (!adj2->v_node->source && curr_dist < adj2->v_node->dist) {
+                        adj2->v_node->dist = curr_dist++;
+                        adj2->v_node->pred = vertex;
+                    }
+                    if (!adj2->v_node->visited) {
+                        adj2->v_node->visited = true;
+                        graph_dijkstra_enqueue(queue, adj2->v_node);
+                    }
+                    adj2 = adj2->next;
+                }
+            }
+        }
+    }
+    graph_dijkstra_destroy(queue);
+}
+
+void graph_view_path(graph G, string destination) {
+    if (!G) return;
+    list stack = list_create();
+    Vertex_Node *p = G->first;
+    while (p && strcmp(destination, p->data) != 0) {
+        p = p->next;
+    }
+    if (p) {
+        list_push(stack, p->data);
+        Vertex_Node *p2 = p->pred;
+        while (!p2->source) {
+            list_push(stack, p2->data);
+            p2 = p2->pred;
+        }
+        if (p2->source) {
+            list_push(stack, p2->data);
+        }
+    } else {
+        return;
+    }
+    while (stack) {
+        string result = list_pop(stack);
+        if (stack->length >= 1) {
+            printf("%s -> ", result);
+        } else {
+            printf("%s\n", result);
+            list_destroy(stack);
+            return;
+        }
+    }
+
 }
