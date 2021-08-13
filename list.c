@@ -42,6 +42,7 @@ list list_create (void) {
  * free all memory associated with a given list
  */
 void list_destroy (list ddlist) {
+    if (!ddlist) return;
     if (ddlist->head) {
         Node *no_cur = ddlist->head;
         while (no_cur) {
@@ -49,11 +50,10 @@ void list_destroy (list ddlist) {
             no_cur = no_cur->next;
             free(temp->data);
             free(temp);
-
         }
         ddlist->length = 0;
-        free(ddlist);
     }
+    free(ddlist);
 }
 
 // misc interface
@@ -107,19 +107,19 @@ void list_push (list ddlist, string value) {
  */
 string list_pop (list ddlist) {
     if (ddlist->head) {
-        Node *first;
-        first = ddlist->head;
+        string data;
+        data = ddlist->head->data;
         if (ddlist->tail == ddlist->head) {
             free(ddlist->head);
             ddlist->tail = ddlist->head = NULL;
             ddlist->length--;
-            return first->data;
+            return data;
         } else {
             ddlist->head = ddlist->head->next;
             free(ddlist->head->prev);
             ddlist->head->prev= NULL;
             ddlist->length--;
-            return first->data;
+            return data;
         }
     } else {
         return NULL;

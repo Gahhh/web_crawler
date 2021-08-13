@@ -23,6 +23,7 @@
 #include "list.h"
 #include "graph.h"
 #include "pagerank.h"
+#include "dijkstra.h"
 
 /* resizable buffer */
 typedef struct memory {
@@ -58,8 +59,12 @@ int main(int argc, char **argv)
     }
 
     graph_show(network, stdout);
-    graph_pagerank(network, 0.85, 0.00001);
-    graph_viewrank(network, stdout);
+    graph_shortest_path(network, argv[1]);
+    char destination[BUFSIZ];
+    printf("destination: ");
+    fgets(destination, BUFSIZ, stdin);
+    destination[strlen(destination)-1] = '\0'; // trim '\n'
+    graph_view_path(network, destination);
     graph_destroy(network);
 
     return EXIT_SUCCESS;
